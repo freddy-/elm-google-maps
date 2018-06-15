@@ -11,7 +11,16 @@
     <body>
         <script type="text/javascript" src="app.js"></script>
         <script type="text/javascript">
-          var app = Elm.Main.fullscreen();
+            var app = Elm.Main.fullscreen();
+            app.ports.addMarker.subscribe(function(pos) {
+                var gmap = document.querySelector('google-map');
+                var marker = document.createElement('google-map-marker');
+                marker.setAttribute('latitude', pos);
+                marker.setAttribute('longitude', pos);
+                marker.setAttribute('title', "Dynamic marker");
+
+                Polymer.dom(gmap).appendChild(marker);
+            });
         </script>
     </body>
 </html>

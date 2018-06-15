@@ -1,9 +1,12 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing (..)
+
+
+port addMarker : Float -> Cmd msg
 
 
 main : Program Never Model Msg
@@ -21,6 +24,11 @@ main =
 
 
 type alias Model =
+    { counter : Float
+    }
+
+
+type alias LatLong =
     { latitude : Float
     , longitude : Float
     }
@@ -28,7 +36,7 @@ type alias Model =
 
 init : ( Model, Cmd msg )
 init =
-    ( { latitude = 48.2082, longitude = 16.3738 }, Cmd.none )
+    ( { counter = 0 }, Cmd.none )
 
 
 
@@ -38,20 +46,29 @@ init =
 type Msg
     = SetLatitude Float
     | SetLongitude Float
-    | SetLatLong Float Float
+    | AddMarker
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         SetLatitude latitude ->
-            { model | latitude = latitude } ! []
+            model ! []
 
         SetLongitude longitude ->
-            { model | longitude = longitude } ! []
+            model ! []
 
-        SetLatLong latitude longitude ->
-            { model | latitude = latitude, longitude = longitude } ! []
+        AddMarker ->
+            let
+                pos =
+                    model.counter
+
+                newMarker =
+                    LatLong pos pos
+            in
+                ( { model | counter = model.counter + 1 }
+                , addMarker model.counter
+                )
 
 
 googleMap : List (Attribute a) -> List (Html a) -> Html a
@@ -59,54 +76,19 @@ googleMap =
     Html.node "google-map"
 
 
+marker : List (Attribute a) -> List (Html a) -> Html a
+marker =
+    Html.node "google-map-marker"
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ div []
-            [ label [] [ text "Latitude" ]
-            , input
-                [ type_ "range"
-                , attribute "min" "-1800000"
-                , attribute "max" "1800000"
-                , defaultValue (toString model.latitude)
-                , onChange SetLatitude
-                ]
-                []
-            , span [] [ text (toString model.latitude) ]
-            ]
-        , div []
-            [ label [] [ text "Longitude" ]
-            , input
-                [ type_ "range"
-                , attribute "min" "-1800000"
-                , attribute "max" "1800000"
-                , defaultValue (toString model.longitude)
-                , onChange SetLongitude
-                ]
-                []
-            , span [] [ text (toString model.longitude) ]
-            ]
-        , img
-            [ class "elm-logo"
-            , src "http://package.elm-lang.org/assets/elm_logo.svg"
-            ]
-            []
+        [ button [ onClick AddMarker ] [ text "add marker" ]
         , googleMap
-            [ attribute "latitude" (toString model.latitude)
-            , attribute "longitude" (toString model.longitude)
-            , attribute "drag-events" "true"
-            , recordLatLongOnDrag
-            ]
+            [ attribute "api-key" "AIzaSyD3E1D9b-Z7ekrT3tbhl_dy8DCXuIuDDRc" ]
             []
         ]
-
-
-recordLatLongOnDrag : Attribute Msg
-recordLatLongOnDrag =
-    on "google-map-drag" <|
-        map2 SetLatLong
-            (at [ "target", "latitude" ] float)
-            (at [ "target", "longitude" ] float)
 
 
 onChange : (Float -> Msg) -> Attribute Msg
